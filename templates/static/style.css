@@ -1,0 +1,42 @@
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    font-size: 1.0em;
+    font-family: 'Operator Mono', 'Source Code Pro', Menlo, Monaco, Consolas, Courier New, monospace;
+    position: fixed;
+}
+
+canvas {
+    display: block;
+    position: absolute;
+}
+
+.label-small {
+    color: #9999FF;
+    font-size: 1.0rem;
+}
+
+.title {
+    font-size: 1.5rem;
+}
+
+.border {
+    border-width: 1px;
+    border-color: black;
+    border-style: solid;
+    padding: 0.5em;
+}
+
+.node {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
