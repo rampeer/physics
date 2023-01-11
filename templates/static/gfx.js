@@ -1,56 +1,132 @@
-System.register(["./utils.js"], function (exports_1, context_1) {
+System.register(["./world.js", "./vec2.js"], function (exports_1, context_1) {
     "use strict";
-    var utils_js_1, DrawEngine;
-    var __moduleName = context_1 && context_1.id;
-    function Background() {
-        return {
-            order: 0,
-            redraw: function (world, ctx) {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, world.screenSize.x, world.screenSize.y);
-            }
+    var __extends = (this && this.__extends) || (function () {
+        var extendStatics = function (d, b) {
+            extendStatics = Object.setPrototypeOf ||
+                ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+                function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            return extendStatics(d, b);
         };
-    }
+        return function (d, b) {
+            if (typeof b !== "function" && b !== null)
+                throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+            extendStatics(d, b);
+            function __() { this.constructor = d; }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
+    })();
+    var world_js_1, vec2_js_1, Background, Drawing, Transformation;
+    var __moduleName = context_1 && context_1.id;
     return {
         setters: [
-            function (utils_js_1_1) {
-                utils_js_1 = utils_js_1_1;
+            function (world_js_1_1) {
+                world_js_1 = world_js_1_1;
+            },
+            function (vec2_js_1_1) {
+                vec2_js_1 = vec2_js_1_1;
             }
         ],
         execute: function () {
-            DrawEngine = (function () {
-                function DrawEngine() {
+            exports_1("Background", Background = function (fillStyle) {
+                if (fillStyle === void 0) { fillStyle = 'white'; }
+                return new world_js_1.GameObject()
+                    .onRedraw(function (world, drawing, time) {
+                    drawing
+                        .begin()
+                        .rect({
+                        x: world.scene.screenSize.x / 2,
+                        y: world.scene.screenSize.y / 2
+                    }, world.scene.screenSize.x, world.scene.screenSize.y)
+                        .fill(fillStyle);
+                });
+            });
+            Drawing = (function () {
+                function Drawing(ctx) {
+                    this.ctx = ctx;
                 }
-                DrawEngine.prototype.render = function (world, ctx) {
-                    var children = world.scene
-                        .drawFunctions()
-                        .sort(function (a, b) { return utils_js_1.sign(a.order - b.order); });
-                    for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
-                        var child = children_1[_i];
-                        ctx.resetTransform();
-                        ctx.save();
-                        child.redraw(world, ctx);
-                        ctx.restore();
-                    }
+                Drawing.prototype.begin = function () {
+                    this.ctx.beginPath();
+                    return this;
                 };
-                DrawEngine.prototype.setStroke = function (ctx, strokeStyle, lineWidth, alpha) {
+                Drawing.prototype.stroke = function (strokeStyle, lineWidth, alpha) {
                     if (strokeStyle === void 0) { strokeStyle = "black"; }
                     if (lineWidth === void 0) { lineWidth = 1; }
                     if (alpha === void 0) { alpha = 1.0; }
-                    ctx.resetTransform();
-                    ctx.strokeStyle = strokeStyle;
-                    ctx.lineWidth = lineWidth;
-                    ctx.globalAlpha = alpha;
+                    this.ctx.resetTransform();
+                    this.ctx.strokeStyle = strokeStyle;
+                    this.ctx.lineWidth = lineWidth;
+                    this.ctx.globalAlpha = alpha;
+                    this.ctx.stroke();
+                    return this;
                 };
-                DrawEngine.prototype.setFill = function (ctx, fillStyle, alpha) {
+                Drawing.prototype.fill = function (fillStyle, alpha) {
                     if (alpha === void 0) { alpha = 1.0; }
-                    ctx.resetTransform();
-                    ctx.fillStyle = fillStyle;
-                    ctx.globalAlpha = alpha;
+                    this.ctx.resetTransform();
+                    this.ctx.fillStyle = fillStyle;
+                    this.ctx.globalAlpha = alpha;
+                    this.ctx.fill();
+                    return this;
                 };
-                return DrawEngine;
+                Drawing.prototype.ellipse = function (center, radius) {
+                    this.ctx.ellipse(center.x, center.y, radius, radius, 0.0, 0.0, Math.PI * 2);
+                    return this;
+                };
+                Drawing.prototype.line = function (to, from) {
+                    if (from === void 0) { from = null; }
+                    if (from) {
+                        this.ctx.moveTo(from.x, from.y);
+                    }
+                    this.ctx.lineTo(to.x, to.y);
+                    return this;
+                };
+                Drawing.prototype.rect = function (center, width, height, angle) {
+                    if (angle === void 0) { angle = 0.0; }
+                    this.ctx.save();
+                    this.ctx.rotate(angle);
+                    this.ctx.rect(center.x - width / 2, center.y - height / 2, width, height);
+                    this.ctx.restore();
+                    return this;
+                };
+                Drawing.prototype.newRadialGrad = function (center0, radius0, center1, radius1) {
+                    return this.ctx.createRadialGradient(center0.x, center0.y, radius0, center1.x, center1.y, radius1);
+                };
+                Drawing.prototype.text = function (pos, text) {
+                    this.ctx.strokeText(text, pos.x, pos.y);
+                };
+                Drawing.prototype.font = function (font) {
+                    this.ctx.font = font;
+                    return this;
+                };
+                return Drawing;
             }());
-            exports_1("DrawEngine", DrawEngine);
+            exports_1("Drawing", Drawing);
+            Transformation = (function (_super) {
+                __extends(Transformation, _super);
+                function Transformation() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.scale = 1.0;
+                    _this.offset = vec2_js_1.vec2(0.0, 0.0);
+                    return _this;
+                }
+                Transformation.prototype.ellipse = function (center, radius) {
+                    return _super.prototype.ellipse.call(this, center, radius);
+                };
+                Transformation.prototype.line = function (to, from) {
+                    if (from === void 0) { from = null; }
+                    return _super.prototype.line.call(this, to, from);
+                };
+                Transformation.prototype.rect = function (center, width, height, angle) {
+                    if (angle === void 0) { angle = 0.0; }
+                    return _super.prototype.rect.call(this, center, width, height, angle);
+                };
+                Transformation.prototype.newRadialGrad = function (center0, radius0, center1, radius1) {
+                    return _super.prototype.newRadialGrad.call(this, center0, radius0, center1, radius1);
+                };
+                Transformation.prototype.text = function (pos, text) {
+                    return _super.prototype.text.call(this, pos, text);
+                };
+                return Transformation;
+            }(Drawing));
         }
     };
 });

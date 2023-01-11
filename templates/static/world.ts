@@ -1,79 +1,86 @@
-import {DrawEngine, RedrawFunction} from "./gfx.js";
-import {Time, UpdateLogicEngine, UpdateFunction} from "./upd.js";
-import {Vec2} from "./vec2.js";
-import {sign} from "./utils";
+import {vec2, Vec2} from "./vec2.js";
+import {Drawing} from "./gfx.js";
 
-type TGameObject = {
-    update: UpdateFunction | null,
-    draw: RedrawFunction | null,
-    _children: Array<GameObject>
-};
+// Hierarchy: World -> Scene [-> GameObject]* ->  Handlers
 
-export class GameObject implements TGameObject {
-    _children: Array<GameObject>;
-    draw: RedrawFunction = null;
-    update: UpdateFunction = null;
+export function Time(ts: number, dt: number) {
+    return {ts: ts, dt: dt}
+}
 
-    constructor(draw: RedrawFunction = null, update: UpdateFunction = null) {
-        this._children = [];
-        this.draw = draw;
-        this.update = update;
+export type Time = { ts: number, dt: number }
+
+
+export type TOnUpdate = (world: World, t: Time) => void;
+export type TOnRedraw = (world: World, drawing: Drawing, time: Time) => void;
+export type THitTest = (x: number, y: number) => boolean;
+export type TOnClick = () => void;
+
+export class GameObject {
+    public update: TOnUpdate = null;
+    public redraw: TOnRedraw = null;
+    public hitTest: THitTest = null;
+    public clicked: TOnClick = null;
+
+    onUpdate(fn: TOnUpdate) {
+        this.update = fn;
+        return this
     }
 
-    getChildren() {
-        return this._children
+    onRedraw(fn: TOnRedraw) {
+        this.redraw = fn;
+        return this
     }
 
-    add(...objects: GameObject[]) {
-        this._children.push(...objects)
+    onHit(fn: THitTest) {
+        this.hitTest = fn;
+        return this
     }
 
-    remove(...objects: GameObject[]) {
-        for (const obj of objects) {
-            this._children.splice(this._children.indexOf(obj), 1);
-        }
+    onClick(fn: TOnClick) {
+        this.clicked = fn;
+        return this
     }
 }
 
 export class Scene extends GameObject {
-    drawFunctions(sort: boolean = true): Array<RedrawFunction> {
-        let recurse: (o: GameObject) => RedrawFunction[] = (o: GameObject) => {
-            return [o.draw].concat(
-                o.getChildren()
-                    .map(c => recurse(c))
-                    .reduce((a, v) => a.concat(v))
-            );
-        }
-        return sort ? recurse(this) : recurse(this)
-            .sort((a, b) => sign(a.order - b.order))
+    protected children: GameObject[] = [];
+
+    update = (world: World, t: Time): void => {
+        this.children
+            .filter(x => x.update !== null)
+            .forEach(x => x.update(world, t))
     }
 
-    updateFunctions(sort: boolean = true): Array<UpdateFunction> {
-        let recurse: (o: GameObject) => UpdateFunction[] = (o: GameObject) => {
-            return [o.update].concat(
-                o.getChildren()
-                    .map(c => recurse(c))
-                    .reduce((a, v) => a.concat(v))
-            );
-        }
-        return sort ? recurse(this) : recurse(this)
-            .sort((a, b) => sign(a.order - b.order))
+    redraw = (world: World, drawing: Drawing, time: Time): void => {
+        this.children
+            .filter(x => x.redraw !== null)
+            .forEach(x => x.redraw(world, drawing, time))
+    }
+
+    add = (...objects: GameObject[]) => this.children.push(...objects);
+    remove = (...objects: GameObject[]) => objects.forEach(
+        obj => this.children.splice(
+            this.children.indexOf(obj), 1
+        )
+    )
+
+    public screenSize: Vec2 = null;
+
+    screenResize(width: number, height: number) {
+        this.screenSize = vec2(width, height)
     }
 }
 
 export class World {
-    public readonly gfx: DrawEngine;
-    public readonly upd: UpdateLogicEngine;
     public scene: Scene = null;
-    public screenSize: Vec2;
 
-    constructor(gfx: DrawEngine, upd: UpdateLogicEngine) {
-        this.gfx = gfx;
-        this.upd = upd;
+    update(time: Time) {
+        this.scene.update(this, time)
     }
 
-    screenResize(width: number, height: number) {
-        this.screenSize.set(width, height)
+    render(ctx: CanvasRenderingContext2D, time: Time) {
+        let drawing = new Drawing(ctx);
+        this.scene.redraw(this, drawing, time);
     }
 
     setScene(scene: Scene) {
@@ -82,7 +89,7 @@ export class World {
     }
 
     advanceTime(time: Time, ctx: CanvasRenderingContext2D) {
-        this.upd.advanceTime(this, time)
-        this.gfx.render(this, ctx)
+        this.update(time)
+        this.render(ctx, time)
     }
 }

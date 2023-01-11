@@ -8,37 +8,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=0.2, maximum-scale=0.2, user-scalable=no"/>
     <meta name="HandheldFriendly" content="true"/>
 
-    <script src="/static/socket.io.js"></script>
     <script type="text/javascript">
         "use strict";
-
-        var socket = io();
-
-        window.addEventListener("error", ev =>  {
-            socket.emit('my event', {
-                filename: ev.filename,
-                lineno: ev.lineno,
-                message: ev.message,
-            });
-        })
 
         var exports = {};
 
         window.onload = _init;
-        let rndr;
 
         function _init() {
 
             System.import('/static/main.js').then(function (main) {
                 let canvas = document.getElementById('canvas');
                 main.mainInit(canvas, canvas.getContext('2d'));
-                rndr = main.rndr;
             });
         }
     </script>
     <script src="/static/system.js"></script>
     <script src="/static/vec2.js"></script>
-    <script src="/static/conn.js"></script>
     <script src="/static/main.js"></script>
     <script src="/static/level1.js"></script>
     <script>

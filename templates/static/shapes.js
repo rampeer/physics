@@ -15,7 +15,7 @@ System.register([], function (exports_1, context_1) {
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
     })();
-    var Shape, CircleShape, RectShape, Segment;
+    var Shape, CircleShape, RectShape, PolyShape, Segment;
     var __moduleName = context_1 && context_1.id;
     return {
         setters: [],
@@ -50,6 +50,16 @@ System.register([], function (exports_1, context_1) {
                 return RectShape;
             }(Shape));
             exports_1("RectShape", RectShape);
+            PolyShape = (function (_super) {
+                __extends(PolyShape, _super);
+                function PolyShape(center, points, angle) {
+                    var _this = _super.call(this, center, angle) || this;
+                    _this.points = points;
+                    return _this;
+                }
+                return PolyShape;
+            }(Shape));
+            exports_1("PolyShape", PolyShape);
             Segment = (function () {
                 function Segment(from, to) {
                     this.A = from;

@@ -1,36 +1,22 @@
-import {World} from "./world.js";
-import {sign} from "./utils.js";
-import {vec2, Vec2} from "./vec2";
-import {Time} from "./upd";
-
-export type RedrawFunction = {
-    redraw: (world: World, drawing: Drawing, time: Time) => void,
-    order: number
-};
-
-function Background(fillStyle = 'white'): RedrawFunction {
-    return {
-        order: 0, redraw(world: World, drawing: Drawing, time: Time) {
-            drawing
-                .begin()
-                .rect({x: world.screenSize.x, y: world.screenSize.y}, world.screenSize.x, world.screenSize.y)
-                .fill(fillStyle)
-        }
-    }
-}
+import {GameObject, Time, World} from "./world.js";
+import {vec2, Vec2} from "./vec2.js";
 
 
-export class DrawEngine {
-    render(world: World, ctx: CanvasRenderingContext2D, time: Time) {
-        let drawing = new Drawing(ctx);
-        for (const child of world.scene.drawFunctions()) {
-            ctx.resetTransform();
-            ctx.save()
-            child.redraw(world, drawing, time);
-            ctx.restore();
-        }
-    }
-}
+export let Background = (fillStyle = 'white') => new GameObject()
+    .onRedraw((world: World, drawing: Drawing, time: Time) => {
+        drawing
+            .begin()
+            .rect(
+                {
+                    x: world.scene.screenSize.x / 2,
+                    y: world.scene.screenSize.y / 2
+                },
+                world.scene.screenSize.x,
+                world.scene.screenSize.y,
+            )
+            .fill(fillStyle)
+    })
+
 
 export class Drawing {
     ctx: CanvasRenderingContext2D;
@@ -92,7 +78,7 @@ export class Drawing {
     }
 
     text(pos: { x: number, y: number }, text: string) {
-        this.ctx.fillText(text, pos.x, pos.y)
+        this.ctx.strokeText(text, pos.x, pos.y)
     }
 
     font(font: string) {
@@ -102,14 +88,9 @@ export class Drawing {
 }
 
 
-class DrawingTransform extends Drawing {
+class Transformation extends Drawing {
     scale: number = 1.0;
     offset: Vec2 = vec2(0.0, 0.0);
-    rotation: number = 0.0;
-
-    protected t(v: Vec2) {
-        return vec2(v.x)
-    }
 
     ellipse(center: { x: number, y: number }, radius: number) {
         return super.ellipse(center, radius)
