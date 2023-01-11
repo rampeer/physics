@@ -1,5 +1,6 @@
-import {GameObject, Time, World} from "./world.js";
+import {GameObject, Scene, Time, TOnRedraw, World} from "./world.js";
 import {vec2, Vec2} from "./vec2.js";
+import {Level} from "./level1";
 
 
 export let Background = (fillStyle = 'white') => new GameObject()
@@ -21,7 +22,7 @@ export let Background = (fillStyle = 'white') => new GameObject()
 export class Drawing {
     ctx: CanvasRenderingContext2D;
 
-    constructor(ctx: CanvasRenderingContext2D) {
+    constructor(ctx: CanvasRenderingContext2D = null) {
         this.ctx = ctx
     }
 
@@ -88,27 +89,58 @@ export class Drawing {
 }
 
 
-class Transformation extends Drawing {
+export class Transformation extends Drawing {
     scale: number = 1.0;
     offset: Vec2 = vec2(0.0, 0.0);
 
+    fit(scene: Scene, level: Level) {
+        this.scale = Math.min(
+            scene.screenSize.x / level.arena.width(),
+            scene.screenSize.y / level.arena.height()
+        );
+        this.offset = vec2(
+            (scene.screenSize.x - this.scale * level.arena.width()) / 2,
+            (scene.screenSize.y - this.scale * level.arena.height()) / 2
+        )
+    }
+
+    wrap(redraw: TOnRedraw): TOnRedraw {
+        return (world: World, drawing: Drawing, time: Time) => {
+            this.ctx = drawing.ctx;
+            return redraw(world, this, time)
+        }
+    }
+
+    tf(v: { x: number, y: number }) {
+        return {
+            x: v.x * this.scale + this.offset.x,
+            y: v.y * this.scale + this.offset.y,
+        }
+    }
+
+    s(s: number) {
+        return this.scale * s
+    }
+
     ellipse(center: { x: number, y: number }, radius: number) {
-        return super.ellipse(center, radius)
+        return super.ellipse(this.tf(center), this.s(radius))
     }
 
     line(to: { x: number, y: number }, from: { x: number, y: number } = null) {
-        return super.line(to, from)
+        return super.line(this.tf(to), this.tf(from))
     }
 
     rect(center: { x: number, y: number }, width: number, height: number, angle: number = 0.0) {
-        return super.rect(center, width, height, angle)
+        return super.rect(this.tf(center), this.s(width), this.s(height), angle)
     }
 
     newRadialGrad(center0: { x: number, y: number }, radius0: number, center1: { x: number, y: number }, radius1: number) {
-        return super.newRadialGrad(center0, radius0, center1, radius1)
+        return super.newRadialGrad(
+            this.tf(center0), this.s(radius0), this.tf(center1), this.s(radius1)
+        )
     }
 
     text(pos: { x: number, y: number }, text: string) {
-        return super.text(pos, text)
+        return super.text(this.tf(pos), text)
     }
 }

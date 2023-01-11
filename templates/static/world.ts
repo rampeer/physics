@@ -3,16 +3,38 @@ import {Drawing} from "./gfx.js";
 
 // Hierarchy: World -> Scene [-> GameObject]* ->  Handlers
 
+export class World {
+    public scene: Scene = null;
+
+    update(time: Time) {
+        this.scene.update(this, time)
+    }
+
+    render(ctx: CanvasRenderingContext2D, time: Time) {
+        let drawing = new Drawing(ctx);
+        this.scene.redraw(this, drawing, time);
+    }
+
+    setScene(scene: Scene) {
+        this.scene = scene
+        return this
+    }
+
+    advanceTime(time: Time, ctx: CanvasRenderingContext2D) {
+        this.update(time)
+        this.render(ctx, time)
+    }
+}
+
 export function Time(ts: number, dt: number) {
     return {ts: ts, dt: dt}
 }
 
 export type Time = { ts: number, dt: number }
-
-
 export type TOnUpdate = (world: World, t: Time) => void;
 export type TOnRedraw = (world: World, drawing: Drawing, time: Time) => void;
 export type THitTest = (x: number, y: number) => boolean;
+
 export type TOnClick = () => void;
 
 export class GameObject {
@@ -42,8 +64,21 @@ export class GameObject {
     }
 }
 
+export class Container<T> extends Array<T> {
+    add = (...objects: T[]) => this.push(...objects);
+    remove = (...objects: T[]) => objects.forEach(
+        obj => this.splice(
+            this.indexOf(obj), 1
+        )
+    )
+}
+
 export class Scene extends GameObject {
-    protected children: GameObject[] = [];
+    protected children: Container<GameObject> = new Container()
+
+    public add = this.children.add;
+    public remove = this.children.remove;
+    public screenSize: Vec2 = null;
 
     update = (world: World, t: Time): void => {
         this.children
@@ -57,39 +92,7 @@ export class Scene extends GameObject {
             .forEach(x => x.redraw(world, drawing, time))
     }
 
-    add = (...objects: GameObject[]) => this.children.push(...objects);
-    remove = (...objects: GameObject[]) => objects.forEach(
-        obj => this.children.splice(
-            this.children.indexOf(obj), 1
-        )
-    )
-
-    public screenSize: Vec2 = null;
-
     screenResize(width: number, height: number) {
         this.screenSize = vec2(width, height)
-    }
-}
-
-export class World {
-    public scene: Scene = null;
-
-    update(time: Time) {
-        this.scene.update(this, time)
-    }
-
-    render(ctx: CanvasRenderingContext2D, time: Time) {
-        let drawing = new Drawing(ctx);
-        this.scene.redraw(this, drawing, time);
-    }
-
-    setScene(scene: Scene) {
-        this.scene = scene
-        return this
-    }
-
-    advanceTime(time: Time, ctx: CanvasRenderingContext2D) {
-        this.update(time)
-        this.render(ctx, time)
     }
 }

@@ -1,32 +1,33 @@
-import {Scene, World} from "./world.js";
+import {Scene, Time, World, TOnUpdate, GameObject} from "./world.js";
 import {Level} from "./level1.js";
-import {vec2, Vec2} from "./vec2.js";
+import {Background, Drawing, Transformation} from "./gfx.js";
+import {RectDrawer} from "./gfx_geom.js";
+import {RectShape} from "./shapes.js";
+import {vec2} from "./vec2.js";
 
 export class LevelGameplayScene extends Scene {
-    public lvlScreenOffset: Vec2;
-    public lvlScreenScale: number;
     public level: Level;
+    private transform: Transformation;
 
     constructor(level: Level) {
         super();
         this.level = level;
+        this.transform = new Transformation();
+        let rect = new RectShape(vec2(100, 100), 75, 50, 0.0);
+        this.add(
+            Background(),
+            RectDrawer(rect, "black", "red", 1),
+            new GameObject().onUpdate(((world, t) => {
+                rect.pos.x = Math.cos(t.ts / 2) * 100 + 200;
+                rect.pos.y = Math.sin(t.ts / 2) * 100 + 200;
+            }))
+        );
     }
 
-    // computeLevelDrawTransform(world: World) {
-    //     let scale = Math.min(
-    //         world.screenSize.x / this.level.arena.width(),
-    //         world.screenSize.y / this.level.arena.height()
-    //     );
-    //     this.lvlScreenOffset = vec2(
-    //         (world.screenSize.x - scale * this.level.arena.width()) / 2,
-    //         (world.screenSize.y - scale * this.level.arena.height()) / 2
-    //     )
-    //     this.lvlScreenScale = scale
-    // }
-    //
-    // public levelCoordinatesTransform = (ctx: CanvasRenderingContext2D) => {
-    //     ctx.resetTransform();
-    //     ctx.translate(this.lvlScreenOffset.x, this.lvlScreenOffset.y);
-    //     ctx.scale(this.lvlScreenScale, this.lvlScreenScale)
-    // }
+    redraw = (world: World, drawing: Drawing, time: Time): void => {
+        this.transform.ctx = drawing.ctx;
+        this.children
+            .filter(x => x.redraw !== null)
+            .forEach(x => x.redraw(world, this.transform, time))
+    }
 }

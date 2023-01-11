@@ -1,5 +1,6 @@
 import {Region, vec2, Vec2} from "./vec2.js";
-import {GameObject} from "./world.js";
+import {GameObject, Time, World} from "./world.js";
+import {Drawing, Transformation} from "./gfx.js";
 // import {PlayerPaddle} from "./world_player.js";
 
 export class Level extends GameObject {

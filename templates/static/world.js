@@ -15,7 +15,7 @@ System.register(["./vec2.js", "./gfx.js"], function (exports_1, context_1) {
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
     })();
-    var vec2_js_1, gfx_js_1, GameObject, Scene, World;
+    var vec2_js_1, gfx_js_1, World, GameObject, Container, Scene;
     var __moduleName = context_1 && context_1.id;
     function Time(ts, dt) {
         return { ts: ts, dt: dt };
@@ -31,6 +31,28 @@ System.register(["./vec2.js", "./gfx.js"], function (exports_1, context_1) {
             }
         ],
         execute: function () {
+            World = (function () {
+                function World() {
+                    this.scene = null;
+                }
+                World.prototype.update = function (time) {
+                    this.scene.update(this, time);
+                };
+                World.prototype.render = function (ctx, time) {
+                    var drawing = new gfx_js_1.Drawing(ctx);
+                    this.scene.redraw(this, drawing, time);
+                };
+                World.prototype.setScene = function (scene) {
+                    this.scene = scene;
+                    return this;
+                };
+                World.prototype.advanceTime = function (time, ctx) {
+                    this.update(time);
+                    this.render(ctx, time);
+                };
+                return World;
+            }());
+            exports_1("World", World);
             GameObject = (function () {
                 function GameObject() {
                     this.update = null;
@@ -57,11 +79,37 @@ System.register(["./vec2.js", "./gfx.js"], function (exports_1, context_1) {
                 return GameObject;
             }());
             exports_1("GameObject", GameObject);
+            Container = (function (_super) {
+                __extends(Container, _super);
+                function Container() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.add = function () {
+                        var objects = [];
+                        for (var _i = 0; _i < arguments.length; _i++) {
+                            objects[_i] = arguments[_i];
+                        }
+                        return _this.push.apply(_this, objects);
+                    };
+                    _this.remove = function () {
+                        var objects = [];
+                        for (var _i = 0; _i < arguments.length; _i++) {
+                            objects[_i] = arguments[_i];
+                        }
+                        return objects.forEach(function (obj) { return _this.splice(_this.indexOf(obj), 1); });
+                    };
+                    return _this;
+                }
+                return Container;
+            }(Array));
+            exports_1("Container", Container);
             Scene = (function (_super) {
                 __extends(Scene, _super);
                 function Scene() {
                     var _this = _super !== null && _super.apply(this, arguments) || this;
-                    _this.children = [];
+                    _this.children = new Container();
+                    _this.add = _this.children.add;
+                    _this.remove = _this.children.remove;
+                    _this.screenSize = null;
                     _this.update = function (world, t) {
                         _this.children
                             .filter(function (x) { return x.update !== null; })
@@ -72,22 +120,6 @@ System.register(["./vec2.js", "./gfx.js"], function (exports_1, context_1) {
                             .filter(function (x) { return x.redraw !== null; })
                             .forEach(function (x) { return x.redraw(world, drawing, time); });
                     };
-                    _this.add = function () {
-                        var _a;
-                        var objects = [];
-                        for (var _i = 0; _i < arguments.length; _i++) {
-                            objects[_i] = arguments[_i];
-                        }
-                        return (_a = _this.children).push.apply(_a, objects);
-                    };
-                    _this.remove = function () {
-                        var objects = [];
-                        for (var _i = 0; _i < arguments.length; _i++) {
-                            objects[_i] = arguments[_i];
-                        }
-                        return objects.forEach(function (obj) { return _this.children.splice(_this.children.indexOf(obj), 1); });
-                    };
-                    _this.screenSize = null;
                     return _this;
                 }
                 Scene.prototype.screenResize = function (width, height) {
@@ -96,28 +128,6 @@ System.register(["./vec2.js", "./gfx.js"], function (exports_1, context_1) {
                 return Scene;
             }(GameObject));
             exports_1("Scene", Scene);
-            World = (function () {
-                function World() {
-                    this.scene = null;
-                }
-                World.prototype.update = function (time) {
-                    this.scene.update(this, time);
-                };
-                World.prototype.render = function (ctx, time) {
-                    var drawing = new gfx_js_1.Drawing(ctx);
-                    this.scene.redraw(this, drawing, time);
-                };
-                World.prototype.setScene = function (scene) {
-                    this.scene = scene;
-                    return this;
-                };
-                World.prototype.advanceTime = function (time, ctx) {
-                    this.update(time);
-                    this.render(ctx, time);
-                };
-                return World;
-            }());
-            exports_1("World", World);
         }
     };
 });

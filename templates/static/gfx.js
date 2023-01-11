@@ -42,6 +42,7 @@ System.register(["./world.js", "./vec2.js"], function (exports_1, context_1) {
             });
             Drawing = (function () {
                 function Drawing(ctx) {
+                    if (ctx === void 0) { ctx = null; }
                     this.ctx = ctx;
                 }
                 Drawing.prototype.begin = function () {
@@ -108,25 +109,46 @@ System.register(["./world.js", "./vec2.js"], function (exports_1, context_1) {
                     _this.offset = vec2_js_1.vec2(0.0, 0.0);
                     return _this;
                 }
+                Transformation.prototype.fit = function (scene, level) {
+                    this.scale = Math.min(scene.screenSize.x / level.arena.width(), scene.screenSize.y / level.arena.height());
+                    this.offset = vec2_js_1.vec2((scene.screenSize.x - this.scale * level.arena.width()) / 2, (scene.screenSize.y - this.scale * level.arena.height()) / 2);
+                };
+                Transformation.prototype.wrap = function (redraw) {
+                    var _this = this;
+                    return function (world, drawing, time) {
+                        _this.ctx = drawing.ctx;
+                        return redraw(world, _this, time);
+                    };
+                };
+                Transformation.prototype.tf = function (v) {
+                    return {
+                        x: v.x * this.scale + this.offset.x,
+                        y: v.y * this.scale + this.offset.y
+                    };
+                };
+                Transformation.prototype.s = function (s) {
+                    return this.scale * s;
+                };
                 Transformation.prototype.ellipse = function (center, radius) {
-                    return _super.prototype.ellipse.call(this, center, radius);
+                    return _super.prototype.ellipse.call(this, this.tf(center), this.s(radius));
                 };
                 Transformation.prototype.line = function (to, from) {
                     if (from === void 0) { from = null; }
-                    return _super.prototype.line.call(this, to, from);
+                    return _super.prototype.line.call(this, this.tf(to), this.tf(from));
                 };
                 Transformation.prototype.rect = function (center, width, height, angle) {
                     if (angle === void 0) { angle = 0.0; }
-                    return _super.prototype.rect.call(this, center, width, height, angle);
+                    return _super.prototype.rect.call(this, this.tf(center), this.s(width), this.s(height), angle);
                 };
                 Transformation.prototype.newRadialGrad = function (center0, radius0, center1, radius1) {
-                    return _super.prototype.newRadialGrad.call(this, center0, radius0, center1, radius1);
+                    return _super.prototype.newRadialGrad.call(this, this.tf(center0), this.s(radius0), this.tf(center1), this.s(radius1));
                 };
                 Transformation.prototype.text = function (pos, text) {
-                    return _super.prototype.text.call(this, pos, text);
+                    return _super.prototype.text.call(this, this.tf(pos), text);
                 };
                 return Transformation;
             }(Drawing));
+            exports_1("Transformation", Transformation);
         }
     };
 });
