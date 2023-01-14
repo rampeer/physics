@@ -14,3 +14,11 @@ export function mobileAndTabletCheck() {
     return check;
 };
 
+export class Container<T> extends Array<T> {
+    add = (...objects: T[]) => this.push(...objects);
+    remove = (...objects: T[]) => objects.forEach(
+        obj => this.splice(
+            this.indexOf(obj), 1
+        )
+    )
+}

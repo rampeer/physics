@@ -79,7 +79,7 @@ export class Vec2 {
     }
 
     flip(dx: number = -1.0, dy: number = -1.0) {
-        return this.clone().set(this.x * dx, this.y * dy);
+        return new Vec2(this.x * dx, this.y * dy);
     }
 
     plus(v: Vec2) {
@@ -118,6 +118,10 @@ export class Vec2 {
         return (this.x * v.x) + (this.y * v.y);
     }
 
+    cross(v: Vec2) {
+        return (this.x * v.y) - (this.y * v.x);
+    }
+
     dotNorm(v: Vec2) {
         return ((this.x * v.x) + (this.y * v.y)) / (
             Math.sqrt((this.x * this.x + this.y * this.y) * (v.x * v.x + v.y * v.y) + 1e-6)
@@ -139,6 +143,9 @@ export class Vec2 {
             (Vector2Const.temp.x * sinRY) + (Vector2Const.temp.y * cosRY)
         )
     }
+
+    rot90 = () => this.rotate(Math.PI / 2);
+    rot270 = () => this.rotate(Math.PI / 2);
 
     dist(to: Vec2) {
         return Vector2Const.temp.set(this.x, this.y).minusEq(to).length();

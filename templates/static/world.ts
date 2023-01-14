@@ -1,5 +1,6 @@
 import {vec2, Vec2} from "./vec2.js";
 import {Drawing} from "./gfx.js";
+import {Container} from "./utils.js";
 
 // Hierarchy: World -> Scene [-> GameObject]* ->  Handlers
 
@@ -62,15 +63,6 @@ export class GameObject {
         this.clicked = fn;
         return this
     }
-}
-
-export class Container<T> extends Array<T> {
-    add = (...objects: T[]) => this.push(...objects);
-    remove = (...objects: T[]) => objects.forEach(
-        obj => this.splice(
-            this.indexOf(obj), 1
-        )
-    )
 }
 
 export class Scene extends GameObject {

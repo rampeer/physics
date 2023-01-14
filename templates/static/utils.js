@@ -1,5 +1,21 @@
 System.register([], function (exports_1, context_1) {
     "use strict";
+    var __extends = (this && this.__extends) || (function () {
+        var extendStatics = function (d, b) {
+            extendStatics = Object.setPrototypeOf ||
+                ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+                function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            return extendStatics(d, b);
+        };
+        return function (d, b) {
+            if (typeof b !== "function" && b !== null)
+                throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+            extendStatics(d, b);
+            function __() { this.constructor = d; }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
+    })();
+    var Container;
     var __moduleName = context_1 && context_1.id;
     function clip(v, min, max) {
         return (v > max ? max : (v < min ? min : v));
@@ -22,6 +38,29 @@ System.register([], function (exports_1, context_1) {
         setters: [],
         execute: function () {
             ;
+            Container = (function (_super) {
+                __extends(Container, _super);
+                function Container() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.add = function () {
+                        var objects = [];
+                        for (var _i = 0; _i < arguments.length; _i++) {
+                            objects[_i] = arguments[_i];
+                        }
+                        return _this.push.apply(_this, objects);
+                    };
+                    _this.remove = function () {
+                        var objects = [];
+                        for (var _i = 0; _i < arguments.length; _i++) {
+                            objects[_i] = arguments[_i];
+                        }
+                        return objects.forEach(function (obj) { return _this.splice(_this.indexOf(obj), 1); });
+                    };
+                    return _this;
+                }
+                return Container;
+            }(Array));
+            exports_1("Container", Container);
         }
     };
 });

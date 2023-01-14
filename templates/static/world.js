@@ -1,4 +1,4 @@
-System.register(["./vec2.js", "./gfx.js"], function (exports_1, context_1) {
+System.register(["./vec2.js", "./gfx.js", "./utils.js"], function (exports_1, context_1) {
     "use strict";
     var __extends = (this && this.__extends) || (function () {
         var extendStatics = function (d, b) {
@@ -15,7 +15,7 @@ System.register(["./vec2.js", "./gfx.js"], function (exports_1, context_1) {
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
     })();
-    var vec2_js_1, gfx_js_1, World, GameObject, Container, Scene;
+    var vec2_js_1, gfx_js_1, utils_js_1, World, GameObject, Scene;
     var __moduleName = context_1 && context_1.id;
     function Time(ts, dt) {
         return { ts: ts, dt: dt };
@@ -28,6 +28,9 @@ System.register(["./vec2.js", "./gfx.js"], function (exports_1, context_1) {
             },
             function (gfx_js_1_1) {
                 gfx_js_1 = gfx_js_1_1;
+            },
+            function (utils_js_1_1) {
+                utils_js_1 = utils_js_1_1;
             }
         ],
         execute: function () {
@@ -79,34 +82,11 @@ System.register(["./vec2.js", "./gfx.js"], function (exports_1, context_1) {
                 return GameObject;
             }());
             exports_1("GameObject", GameObject);
-            Container = (function (_super) {
-                __extends(Container, _super);
-                function Container() {
-                    var _this = _super !== null && _super.apply(this, arguments) || this;
-                    _this.add = function () {
-                        var objects = [];
-                        for (var _i = 0; _i < arguments.length; _i++) {
-                            objects[_i] = arguments[_i];
-                        }
-                        return _this.push.apply(_this, objects);
-                    };
-                    _this.remove = function () {
-                        var objects = [];
-                        for (var _i = 0; _i < arguments.length; _i++) {
-                            objects[_i] = arguments[_i];
-                        }
-                        return objects.forEach(function (obj) { return _this.splice(_this.indexOf(obj), 1); });
-                    };
-                    return _this;
-                }
-                return Container;
-            }(Array));
-            exports_1("Container", Container);
             Scene = (function (_super) {
                 __extends(Scene, _super);
                 function Scene() {
                     var _this = _super !== null && _super.apply(this, arguments) || this;
-                    _this.children = new Container();
+                    _this.children = new utils_js_1.Container();
                     _this.add = _this.children.add;
                     _this.remove = _this.children.remove;
                     _this.screenSize = null;
