@@ -1,19 +1,16 @@
 import {vec2, Vec2} from "./vec2.js";
-import {Drawing} from "./gfx.js";
+import {DrawUtils} from "./gfx.js";
 import {Container} from "./utils.js";
+import {BasicTransform, TransformMatrix} from "./shapes.js";
 
 // Hierarchy: World -> Scene [-> GameObject]* ->  Handlers
 
 export class World {
     public scene: Scene = null;
+    private drawUtils: DrawUtils;
 
-    update(time: Time) {
-        this.scene.update(this, time)
-    }
-
-    render(ctx: CanvasRenderingContext2D, time: Time) {
-        let drawing = new Drawing(ctx);
-        this.scene.redraw(this, drawing, time);
+    constructor(ctx: CanvasRenderingContext2D) {
+        this.drawUtils = new DrawUtils(ctx);
     }
 
     setScene(scene: Scene) {
@@ -21,9 +18,9 @@ export class World {
         return this
     }
 
-    advanceTime(time: Time, ctx: CanvasRenderingContext2D) {
-        this.update(time)
-        this.render(ctx, time)
+    frame(time: Time) {
+        this.scene.update(this, time)
+        this.scene.redraw(this, this.drawUtils, time);
     }
 }
 
@@ -33,12 +30,14 @@ export function Time(ts: number, dt: number) {
 
 export type Time = { ts: number, dt: number }
 export type TOnUpdate = (world: World, t: Time) => void;
-export type TOnRedraw = (world: World, drawing: Drawing, time: Time) => void;
+export type TOnRedraw = (world: World, drawing: DrawUtils, time: Time) => void;
 export type THitTest = (x: number, y: number) => boolean;
 
 export type TOnClick = () => void;
 
 export class GameObject {
+    protected localTransform: TransformMatrix = null;
+    protected screenTransform: TransformMatrix = null;
     public update: TOnUpdate = null;
     public redraw: TOnRedraw = null;
     public hitTest: THitTest = null;
@@ -65,12 +64,10 @@ export class GameObject {
     }
 }
 
-export class Scene extends GameObject {
+export class GameObjectContainer extends GameObject {
     protected children: Container<GameObject> = new Container()
-
     public add = this.children.add;
     public remove = this.children.remove;
-    public screenSize: Vec2 = null;
 
     update = (world: World, t: Time): void => {
         this.children
@@ -78,10 +75,23 @@ export class Scene extends GameObject {
             .forEach(x => x.update(world, t))
     }
 
-    redraw = (world: World, drawing: Drawing, time: Time): void => {
+    redraw = (world: World, drawing: DrawUtils, time: Time): void => {
+        if (this.localTransform)
+            drawing.pushTransform(this.localTransform)
         this.children
             .filter(x => x.redraw !== null)
             .forEach(x => x.redraw(world, drawing, time))
+        if (this.localTransform)
+            drawing.popTransform()
+    }
+}
+
+export class Scene extends GameObjectContainer {
+    public screenSize: Vec2 = null;
+
+    constructor() {
+        super();
+        this.localTransform = new BasicTransform()
     }
 
     screenResize(width: number, height: number) {

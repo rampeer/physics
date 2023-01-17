@@ -1,10 +1,11 @@
 import {GameObject, Scene, Time, TOnRedraw, World} from "./world.js";
 import {vec2, Vec2} from "./vec2.js";
-import {Level} from "./level1";
+import {Level} from "./level1.js";
+import {TransformMatrix} from "./shapes.js";
 
 
 export let Background = (fillStyle = 'white') => new GameObject()
-    .onRedraw((world: World, drawing: Drawing, time: Time) => {
+    .onRedraw((world: World, drawing: DrawUtils, time: Time) => {
         drawing
             .begin()
             .rect(
@@ -19,8 +20,31 @@ export let Background = (fillStyle = 'white') => new GameObject()
     })
 
 
-export class Drawing {
+export class DrawUtils {
     ctx: CanvasRenderingContext2D;
+    private tfStackProd: TransformMatrix[] = [];
+    private tfCurrent: TransformMatrix = new TransformMatrix()
+
+    pushTransform(tf: TransformMatrix) {
+        this.tfStackProd.push(this.tfCurrent)
+        this.tfCurrent = this.tfCurrent.mul(tf, new TransformMatrix())
+        this.tfUpdate()
+        return this
+    }
+
+    popTransform() {
+        this.tfCurrent = this.tfStackProd.pop()
+        this.tfUpdate()
+        return this
+    }
+
+    private tfUpdate() {
+        this.ctx.setTransform(
+            this.tfCurrent.matrix[0], this.tfCurrent.matrix[1],
+            this.tfCurrent.matrix[2], this.tfCurrent.matrix[3],
+            this.tfCurrent.offset[0], this.tfCurrent.offset[1]
+        )
+    }
 
     constructor(ctx: CanvasRenderingContext2D = null) {
         this.ctx = ctx
@@ -50,8 +74,8 @@ export class Drawing {
         return this
     }
 
-    ellipse(center: { x: number, y: number }, radius: number) {
-        this.ctx.ellipse(center.x, center.y, radius, radius, 0.0, 0.0, Math.PI * 2)
+    ellipse(center: { x: number, y: number }, radius: number, radius2?: number) {
+        this.ctx.ellipse(center.x, center.y, radius, radius2 || radius, 0.0, 0.0, Math.PI * 2)
         return this
     }
 
@@ -78,69 +102,15 @@ export class Drawing {
         )
     }
 
-    text(pos: { x: number, y: number }, text: string) {
-        this.ctx.strokeText(text, pos.x, pos.y)
+    text(pos: { x: number, y: number }, text: string, baseline: CanvasTextBaseline = "top") {
+        this.ctx.fillText(text, pos.x, pos.y)
+        if (baseline)
+            this.ctx.textBaseline = baseline
+        return this
     }
 
     font(font: string) {
         this.ctx.font = font;
         return this
-    }
-}
-
-
-export class Transformation extends Drawing {
-    scale: number = 1.0;
-    offset: Vec2 = vec2(0.0, 0.0);
-
-    fit(scene: Scene, level: Level) {
-        this.scale = Math.min(
-            scene.screenSize.x / level.arena.width(),
-            scene.screenSize.y / level.arena.height()
-        );
-        this.offset = vec2(
-            (scene.screenSize.x - this.scale * level.arena.width()) / 2,
-            (scene.screenSize.y - this.scale * level.arena.height()) / 2
-        )
-    }
-
-    wrap(redraw: TOnRedraw): TOnRedraw {
-        return (world: World, drawing: Drawing, time: Time) => {
-            this.ctx = drawing.ctx;
-            return redraw(world, this, time)
-        }
-    }
-
-    tf(v: { x: number, y: number }) {
-        return {
-            x: v.x * this.scale + this.offset.x,
-            y: v.y * this.scale + this.offset.y,
-        }
-    }
-
-    s(s: number) {
-        return this.scale * s
-    }
-
-    ellipse(center: { x: number, y: number }, radius: number) {
-        return super.ellipse(this.tf(center), this.s(radius))
-    }
-
-    line(to: { x: number, y: number }, from: { x: number, y: number } = null) {
-        return super.line(this.tf(to), this.tf(from))
-    }
-
-    rect(center: { x: number, y: number }, width: number, height: number, angle: number = 0.0) {
-        return super.rect(this.tf(center), this.s(width), this.s(height), angle)
-    }
-
-    newRadialGrad(center0: { x: number, y: number }, radius0: number, center1: { x: number, y: number }, radius1: number) {
-        return super.newRadialGrad(
-            this.tf(center0), this.s(radius0), this.tf(center1), this.s(radius1)
-        )
-    }
-
-    text(pos: { x: number, y: number }, text: string) {
-        return super.text(this.tf(pos), text)
     }
 }

@@ -1,4 +1,4 @@
-System.register(["./vec2.js", "./gfx.js", "./utils.js"], function (exports_1, context_1) {
+System.register(["./vec2.js", "./gfx.js", "./utils.js", "./shapes.js"], function (exports_1, context_1) {
     "use strict";
     var __extends = (this && this.__extends) || (function () {
         var extendStatics = function (d, b) {
@@ -15,7 +15,7 @@ System.register(["./vec2.js", "./gfx.js", "./utils.js"], function (exports_1, co
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
     })();
-    var vec2_js_1, gfx_js_1, utils_js_1, World, GameObject, Scene;
+    var vec2_js_1, gfx_js_1, utils_js_1, shapes_js_1, World, GameObject, GameObjectContainer, Scene;
     var __moduleName = context_1 && context_1.id;
     function Time(ts, dt) {
         return { ts: ts, dt: dt };
@@ -31,33 +31,37 @@ System.register(["./vec2.js", "./gfx.js", "./utils.js"], function (exports_1, co
             },
             function (utils_js_1_1) {
                 utils_js_1 = utils_js_1_1;
+            },
+            function (shapes_js_1_1) {
+                shapes_js_1 = shapes_js_1_1;
             }
         ],
         execute: function () {
             World = (function () {
-                function World() {
+                function World(ctx) {
                     this.scene = null;
+                    this.drawUtils = new gfx_js_1.DrawUtils(ctx);
                 }
                 World.prototype.update = function (time) {
                     this.scene.update(this, time);
                 };
-                World.prototype.render = function (ctx, time) {
-                    var drawing = new gfx_js_1.Drawing(ctx);
-                    this.scene.redraw(this, drawing, time);
+                World.prototype.render = function (time) {
+                    this.scene.redraw(this, this.drawUtils, time);
                 };
                 World.prototype.setScene = function (scene) {
                     this.scene = scene;
                     return this;
                 };
-                World.prototype.advanceTime = function (time, ctx) {
+                World.prototype.frame = function (time) {
                     this.update(time);
-                    this.render(ctx, time);
+                    this.render(time);
                 };
                 return World;
             }());
             exports_1("World", World);
             GameObject = (function () {
                 function GameObject() {
+                    this.localTransform = null;
                     this.update = null;
                     this.redraw = null;
                     this.hitTest = null;
@@ -82,31 +86,45 @@ System.register(["./vec2.js", "./gfx.js", "./utils.js"], function (exports_1, co
                 return GameObject;
             }());
             exports_1("GameObject", GameObject);
-            Scene = (function (_super) {
-                __extends(Scene, _super);
-                function Scene() {
+            GameObjectContainer = (function (_super) {
+                __extends(GameObjectContainer, _super);
+                function GameObjectContainer() {
                     var _this = _super !== null && _super.apply(this, arguments) || this;
                     _this.children = new utils_js_1.Container();
                     _this.add = _this.children.add;
                     _this.remove = _this.children.remove;
-                    _this.screenSize = null;
                     _this.update = function (world, t) {
                         _this.children
                             .filter(function (x) { return x.update !== null; })
                             .forEach(function (x) { return x.update(world, t); });
                     };
                     _this.redraw = function (world, drawing, time) {
+                        if (_this.localTransform)
+                            drawing.pushTransform(_this.localTransform);
                         _this.children
                             .filter(function (x) { return x.redraw !== null; })
                             .forEach(function (x) { return x.redraw(world, drawing, time); });
+                        if (_this.localTransform)
+                            drawing.popTransform();
                     };
+                    return _this;
+                }
+                return GameObjectContainer;
+            }(GameObject));
+            exports_1("GameObjectContainer", GameObjectContainer);
+            Scene = (function (_super) {
+                __extends(Scene, _super);
+                function Scene() {
+                    var _this = _super.call(this) || this;
+                    _this.screenSize = null;
+                    _this.localTransform = new shapes_js_1.BasicTransform();
                     return _this;
                 }
                 Scene.prototype.screenResize = function (width, height) {
                     this.screenSize = vec2_js_1.vec2(width, height);
                 };
                 return Scene;
-            }(GameObject));
+            }(GameObjectContainer));
             exports_1("Scene", Scene);
         }
     };

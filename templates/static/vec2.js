@@ -6,6 +6,10 @@ System.register([], function (exports_1, context_1) {
         return new Vec2(x, y);
     }
     exports_1("vec2", vec2);
+    function vecFromTo(from, to) {
+        return new Vec2(to.x - from.x, to.y - from.y);
+    }
+    exports_1("vecFromTo", vecFromTo);
     return {
         setters: [],
         execute: function () {
@@ -36,6 +40,9 @@ System.register([], function (exports_1, context_1) {
             exports_1("Region", Region);
             Vec2 = (function () {
                 function Vec2(x, y) {
+                    var _this = this;
+                    this.rot90 = function () { return _this.rotate(Math.PI / 2); };
+                    this.rot270 = function () { return _this.rotate(Math.PI / 2); };
                     this.x = x;
                     this.y = y;
                 }
@@ -69,7 +76,7 @@ System.register([], function (exports_1, context_1) {
                 Vec2.prototype.flip = function (dx, dy) {
                     if (dx === void 0) { dx = -1.0; }
                     if (dy === void 0) { dy = -1.0; }
-                    return this.clone().set(this.x * dx, this.y * dy);
+                    return new Vec2(this.x * dx, this.y * dy);
                 };
                 Vec2.prototype.plus = function (v) {
                     return new Vec2(this.x + v.x, this.y + v.y);
@@ -88,6 +95,9 @@ System.register([], function (exports_1, context_1) {
                 };
                 Vec2.prototype.dot = function (v) {
                     return (this.x * v.x) + (this.y * v.y);
+                };
+                Vec2.prototype.cross = function (v) {
+                    return (this.x * v.y) - (this.y * v.x);
                 };
                 Vec2.prototype.dotNorm = function (v) {
                     return ((this.x * v.x) + (this.y * v.y)) / (Math.sqrt((this.x * this.x + this.y * this.y) * (v.x * v.x + v.y * v.y) + 1e-6));
@@ -114,6 +124,15 @@ System.register([], function (exports_1, context_1) {
                     v.x = this.x;
                     v.y = this.y;
                     return v;
+                };
+                Vec2.prototype.project = function (norm) {
+                    var dotNormed = this.dotNorm(norm);
+                    var normal = this.mul(dotNormed);
+                    return {
+                        vecNormal: normal,
+                        vecTangent: vecFromTo(normal, this),
+                        dotProd: dotNormed
+                    };
                 };
                 return Vec2;
             }());

@@ -2,6 +2,10 @@ export function vec2(x: number, y: number) {
     return new Vec2(x, y)
 }
 
+export function vecFromTo(from: Vec2, to: Vec2) {
+    return new Vec2(to.x - from.x, to.y - from.y)
+}
+
 export class Region {
     private topLeft: Vec2;
     private bottomRight: Vec2;
@@ -37,7 +41,6 @@ export class Region {
 export class Vec2 {
     x: number;
     y: number;
-
 
     constructor(x: number, y: number) {
         this.x = x;
@@ -164,7 +167,19 @@ export class Vec2 {
         v.y = this.y;
         return v;
     }
+
+    project(norm: Vec2): Vec2Components {
+        let dotNormed = this.dotNorm(norm)
+        let normal = this.mul(dotNormed)
+        return {
+            vecNormal: normal,
+            vecTangent: vecFromTo(normal, this),
+            dotProd: dotNormed
+        }
+    }
 };
+
+type Vec2Components = { vecNormal: Vec2, vecTangent: Vec2, dotProd: number}
 
 let Vector2Const = {
     TO_DEGREES: 180 / Math.PI,

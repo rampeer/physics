@@ -1,60 +1,54 @@
-System.register(["./world.js"], function (exports_1, context_1) {
+System.register([], function (exports_1, context_1) {
     "use strict";
-    var world_js_1, ArrowDrawer, TextDrawer, CircleDrawer, RectDrawer;
+    var TextDrawer, CircleDrawer, PolyDrawer;
     var __moduleName = context_1 && context_1.id;
     return {
-        setters: [
-            function (world_js_1_1) {
-                world_js_1 = world_js_1_1;
-            }
-        ],
+        setters: [],
         execute: function () {
-            exports_1("ArrowDrawer", ArrowDrawer = function (pos, dir, target, line_width, color) {
-                if (dir === void 0) { dir = null; }
-                if (target === void 0) { target = null; }
-                if (line_width === void 0) { line_width = 1; }
+            exports_1("TextDrawer", TextDrawer = function (pos, text, color, fontName, fontVariation, fontSize, fontSizeUnit) {
                 if (color === void 0) { color = "black"; }
-                return new world_js_1.GameObject()
-                    .onRedraw(function (world, drawing, time) {
+                if (fontName === void 0) { fontName = "serif"; }
+                if (fontVariation === void 0) { fontVariation = "bold"; }
+                if (fontSize === void 0) { fontSize = 18; }
+                if (fontSizeUnit === void 0) { fontSizeUnit = "px"; }
+                return function (world, drawing) {
                     drawing.begin()
-                        .line(pos, target)
-                        .stroke(color, line_width);
-                });
+                        .font("".concat(fontVariation, " ").concat(fontSize).concat(fontSizeUnit, " ").concat(fontName))
+                        .text(pos(), text());
+                };
             });
-            exports_1("TextDrawer", TextDrawer = function (pos, text, font, color) {
-                if (font === void 0) { font = "bold 18px serif"; }
-                if (color === void 0) { color = "black"; }
-                return new world_js_1.GameObject()
-                    .onRedraw(function (world, drawing) {
-                    drawing.begin()
-                        .font(font)
-                        .stroke(color)
-                        .text(pos, text());
-                });
-            });
-            exports_1("CircleDrawer", CircleDrawer = function (circle, fillStyle) {
+            exports_1("CircleDrawer", CircleDrawer = function (circle, fillStyle, lineColor, lineWidth) {
                 if (fillStyle === void 0) { fillStyle = "black"; }
-                return new world_js_1.GameObject()
-                    .onRedraw(function (world, drawing) {
+                if (lineColor === void 0) { lineColor = "black"; }
+                if (lineWidth === void 0) { lineWidth = 1; }
+                return function (world, drawing) {
+                    var c = circle();
                     drawing.begin()
-                        .ellipse(circle.pos, circle.radius)
-                        .fill(fillStyle);
-                });
+                        .ellipse({ x: c.x || 0.0, y: c.y || 0.0 }, c.radius);
+                    if (lineColor)
+                        drawing.stroke(lineColor, lineWidth);
+                    if (fillStyle)
+                        drawing.fill(fillStyle);
+                };
             });
-            exports_1("RectDrawer", RectDrawer = function (rect, lineColor, fillColor, lineWidth, order) {
+            exports_1("PolyDrawer", PolyDrawer = function (points, lineColor, fillColor, lineWidth) {
                 if (lineColor === void 0) { lineColor = "black"; }
                 if (fillColor === void 0) { fillColor = "red"; }
                 if (lineWidth === void 0) { lineWidth = 1; }
-                if (order === void 0) { order = 0; }
-                return new world_js_1.GameObject()
-                    .onRedraw(function (world, drawing) {
-                    drawing.begin()
-                        .rect(rect.pos, rect.width, rect.height, rect.angle);
-                    if (fillColor)
-                        drawing.fill(fillColor);
+                return function (world, drawing) {
+                    drawing.begin();
+                    var pts = points();
+                    var lastPt = pts[pts.length - 1];
+                    for (var _i = 0, pts_1 = pts; _i < pts_1.length; _i++) {
+                        var e = pts_1[_i];
+                        drawing.line({ x: e.x, y: e.y }, { x: lastPt.x, y: lastPt.y });
+                        lastPt = e;
+                    }
                     if (lineColor)
                         drawing.stroke(lineColor, lineWidth);
-                });
+                    if (fillColor)
+                        drawing.fill(fillColor);
+                };
             });
         }
     };
