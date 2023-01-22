@@ -1,6 +1,6 @@
 System.register(["./world.js", "./gfx_geom.js", "./vec2.js"], function (exports_1, context_1) {
     "use strict";
-    var world_js_1, gfx_geom_js_1, vec2_js_1, Node;
+    var world_js_1, gfx_geom_js_1, vec2_js_1;
     var __moduleName = context_1 && context_1.id;
     function FPSCounter() {
         var counter = 0, nextReset = 0, fps = 0;
@@ -11,41 +11,45 @@ System.register(["./world.js", "./gfx_geom.js", "./vec2.js"], function (exports_
                 counter = 0;
                 nextReset = t.ts + 1.0;
             }
-        }).onRedraw(gfx_geom_js_1.TextDrawer(function () { return vec2_js_1.vec2(10.0, 10.0); }, function () { return "FPS: ".concat(fps); }));
+        }).onRedraw(function (w, d) {
+            var r = w.getSize();
+            gfx_geom_js_1.DrawText(vec2_js_1.vec2(50, r.y - 50), "FPS: ".concat(fps), { fontSize: 30 }, { fillColor: "red" })(w, d);
+        }).named("FPS Counter");
     }
     exports_1("FPSCounter", FPSCounter);
     function Tree() {
-        var root = new Node();
-        var updateThunk = function (level, index, n, o) {
+        var Node = (function () {
+            function Node() {
+                this.children = [];
+            }
+            return Node;
+        }());
+        var root;
+        var rebuildTree = function (level, index, n, obj) {
+            n.lastIndex = n.index = index;
             n.level = level;
-            n.index = n.lastIndex = index;
-            n.children = [];
-            var oProto = Object.getPrototypeOf(o);
-            var text = oProto.constructor["name"] || "???";
-            n.text = "".concat(n.index, ": ").concat(text);
-            if (o instanceof world_js_1.GameObjectContainer) {
-                for (var _i = 0, _a = o["children"]; _i < _a.length; _i++) {
-                    var c = _a[_i];
-                    var nc = updateThunk(level + 1, n.lastIndex + 1, new Node(), c);
-                    n.children.push(nc);
-                    n.lastIndex = nc.lastIndex;
+            var name = obj.name || Object.getPrototypeOf(obj).constructor["name"];
+            var typename = obj.typename;
+            n.text = "".concat(n.index, ": '").concat(name, "' (").concat(typename, ")");
+            if (obj instanceof world_js_1.GameObjectContainer) {
+                for (var _i = 0, _a = obj["children"]; _i < _a.length; _i++) {
+                    var child = _a[_i];
+                    var childNode = rebuildTree(level + 1, index += 1, new Node(), child);
+                    n.children.push(childNode);
+                    n.lastIndex = index = childNode.lastIndex;
                 }
             }
             return n;
         };
-        var drawNode = function (drawing, n) {
-            drawing.text({
-                x: n.level * 70,
-                y: n.index * 50
-            }, "".concat(n.level, " ").concat(n.index, " : ").concat(n.text));
-            n.children.forEach(function (x) { return drawNode(drawing, x); });
+        var drawNode = function (world, drawing, time, n) {
+            gfx_geom_js_1.DrawText({ x: n.level * 40, y: n.index * 40 }, n.text)(world, drawing);
+            n.children.forEach(function (x) { return drawNode(world, drawing, time, x); });
         };
         return new world_js_1.GameObject().onUpdate(function (world) {
-            root = updateThunk(0, 0, new Node(), world.scene);
-        }).onRedraw((function (world, drawing, time) {
-            drawNode(drawing, root);
-            throw Error();
-        }));
+            root = rebuildTree(0, 0, new Node(), world.scene);
+        }).onRedraw(function (world, drawing, time) {
+            return drawNode(world, drawing, time, root);
+        }).named("Object tree debug");
     }
     exports_1("Tree", Tree);
     return {
@@ -61,12 +65,6 @@ System.register(["./world.js", "./gfx_geom.js", "./vec2.js"], function (exports_
             }
         ],
         execute: function () {
-            Node = (function () {
-                function Node() {
-                    this.children = [];
-                }
-                return Node;
-            }());
         }
     };
 });

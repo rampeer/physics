@@ -19,19 +19,95 @@
 
             System.import('/static/main.js').then(function (main) {
                 let canvas = document.getElementById('canvas');
-                main.mainInit(canvas, canvas.getContext('2d'));
+                let container = document.getElementById('container');
+                main.mainInit(container, canvas, canvas.getContext('2d'));
             });
         }
     </script>
     <script src="/static/system.js"></script>
     <script src="/static/vec2.js"></script>
-    <script src="/static/main.js"></script>
+    <script type="module" src="/static/main.js"></script>
     <script src="/static/level1.js"></script>
     <script>
     </script>
     <link rel="stylesheet" href="static/style.css">
+    <!--script type="module" src="/static/codemirror.js"></script>
+    <script src="/static/code.js"></script-->
 </head>
 <body>
-<canvas id="canvas"></canvas>
+<div class="main">
+    <div class="vertical">
+        <!-- Toolbar -->
+        <div class="item-0 horizontal">
+            <div class="item-0">
+                <b>MY TITLE</b>
+            </div>
+            <div class="item-1">
+                <b>MY TOOLBAR</b>
+            </div>
+        </div>
+        <div class="item-1 horizontal">
+            <div class="item-1">
+                MY<br />
+                SIDE<br/>
+                MENU
+            </div>
+            <div class="item-6" id="container">
+                <canvas id="canvas"></canvas>
+            </div>
+            <div class="item-1">
+                <b>MY RIGHTBAR</b>
+            </div>
+        </div>
+        <div class="item-0 horizontal">
+            <div class="item-0">
+                My footer left #1
+            </div>
+            <div class="item-1">
+            </div>
+            <div class="item-0">
+                My footer right #2
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
+
+<!--
+        <div class="item">
+            <div class="vertical">
+                <div class="item-0 vertical">
+                    <div class="pad">
+                        <b>TITLE</b>
+                    </div>
+                </div>
+                <div class="item vertical">
+                    <div class="pad">
+                        <div contenteditable="true"
+                             id="code"
+                             type="text"
+                             class="textbox">
+                            CODE<span>dffgghljmkdf</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-0 vertical">
+                    <div class="pad">
+                        <input type="button" value="SAMPLE" class="btn"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+         Tab 2
+<div class="item">
+    <div class="vertical">
+        <div class="item">
+            <div>SAMPLE TEXT</div>
+            <div id="codeeditor">
+            </div>
+        </div>
+    </div>
+</div>
+</div>-->

@@ -34,15 +34,17 @@ System.register(["./world.js", "./gfx.js", "./g_ui.js"], function (exports_1, co
                 __extends(MainScene, _super);
                 function MainScene(level) {
                     var _this = _super.call(this) || this;
-                    _this.rescaleLevelTransform = function () {
-                        var scale = Math.min(_this.screenSize.x / _this.level.bounds.width(), _this.screenSize.y / _this.level.bounds.height());
+                    _this.name = "Gameplay Scene";
+                    _this.rescaleLevelTransform = function (world) {
+                        var r = world.getSize(), b = _this.level.bounds;
+                        var scale = Math.min(r.x / b.width(), r.y / b.height());
                         _this.level.localTransform.setPos({
-                            x: (_this.screenSize.x - scale * _this.level.bounds.width()) / 2,
-                            y: (_this.screenSize.y - scale * _this.level.bounds.height()) / 2
+                            x: (r.x - scale * b.width()) / 2,
+                            y: (r.y - scale * b.height()) / 2
                         }).setScale(scale);
                     };
                     _this.level = level;
-                    _this.add(gfx_js_1.Background(), new world_js_1.GameObject().onUpdate(_this.rescaleLevelTransform), level, g_ui_js_1.Tree(), g_ui_js_1.FPSCounter());
+                    _this.add(gfx_js_1.Background(), new world_js_1.GameObject().onUpdate(_this.rescaleLevelTransform).named("Update level transform"), level, g_ui_js_1.Tree(), g_ui_js_1.FPSCounter());
                     return _this;
                 }
                 return MainScene;

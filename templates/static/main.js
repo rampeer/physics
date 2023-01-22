@@ -2,8 +2,8 @@ System.register(["./world.js", "./controls.js", "./world_scene.js", "./level1.js
     "use strict";
     var world_js_1, controls_js_1, world_scene_js_1, level1_js_1, world;
     var __moduleName = context_1 && context_1.id;
-    function mainInit(canvas) {
-        exports_1("world", world = new world_js_1.World(canvas.getContext('2d')).setScene(new world_scene_js_1.MainScene(new level1_js_1.Level1())));
+    function mainInit(container, canvas, ctx) {
+        exports_1("world", world = new world_js_1.World(container, ctx).setScene(new world_scene_js_1.MainScene(new level1_js_1.Level1())));
         var time = world_js_1.Time(null, null);
         controls_js_1.initControls(canvas);
         function onAnimationFrame(timestamp) {
@@ -15,10 +15,12 @@ System.register(["./world.js", "./controls.js", "./world_scene.js", "./level1.js
             window.requestAnimationFrame(onAnimationFrame);
         }
         var onCanvasResize = function () {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            var r = world.getSize();
+            canvas.width = r.x;
+            canvas.height = r.y;
             if (world && world.scene) {
-                world.scene.screenResize(window.innerWidth, window.innerHeight);
+                console.log(r.x, r.y);
+                world.scene.screenResize(r.x, r.y);
             }
         };
         onCanvasResize();

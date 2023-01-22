@@ -1,16 +1,16 @@
+import os.path
 import uuid
+from mimetypes import MimeTypes
 
 import mako
 import ast
 import autocompile
 
 import flask
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 from flask_socketio import SocketIO, join_room, leave_room
 
-app = Flask(__name__,
-            static_folder="./templates/static/",
-            static_url_path="/static/")
+app = Flask(__name__)
 app.secret_key = "somesecretkey"
 socketio = SocketIO(app, manage_session=True, cookie='sid')
 
@@ -23,6 +23,16 @@ def get_uid():
 
 def get_sid():
     return getattr(flask.request, 'sid', None)
+
+@app.route("/static/<filename>")
+def content(filename: str):
+    if len(filename.split(".")[-1]) > 4:
+        # i.e. not '.ts', '.js' or '.jpg'
+        filename += ".js"
+    r = send_from_directory("./templates/static/", filename,
+                            max_age=0,
+                            mimetype=MimeTypes().guess_type(filename)[0])
+    return r
 
 
 @app.route('/')
@@ -59,7 +69,7 @@ def disconnect(*args, **kwargs):
 
 if __name__ == '__main__':
     socketio.run(
-        app, "0.0.0.0", 7070,
+        app, "0.0.0.0", 9090,
         # allow_unsafe_werkzeug=True,
         debug=True, use_reloader=True
     )

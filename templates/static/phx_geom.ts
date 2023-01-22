@@ -115,3 +115,74 @@
 // // let circleCircleContact = (c_: Circle, c: Circle, r_: Corner, r: Corner): number => {
 // //
 // // }
+import {vec2, Vec2} from "./vec2";
+import {Time} from "./world";
+
+
+class PartSegment {
+    public from: Vec2 = vec2(0.0, 0.0);
+    public to: Vec2 = vec2(0.0, 0.0);
+    public leftNormal: Vec2 = vec2(0.0, 0.0);
+    public direction: Vec2 = vec2(0.0, 0.0);
+    public len: number = 0.0;
+
+    constructor(from: { x: number, y: number }, to: { x: number, y: number }) {
+        this.set(from, to)
+    }
+
+    set(from: { x: number, y: number }, to: { x: number, y: number }) {
+        let dx = to.x - from.x,
+            dy = to.y - from.y,
+            len = Math.sqrt(dx * dx + dy * dy)
+        this.from.set(from.x, from.y)
+        this.to.set(to.x, to.y)
+        this.direction.set(dx, dy)
+        this.leftNormal.set(-dy, dx)
+        this.len = len
+        return this
+    }
+}
+
+class PartPoint {
+    public center: Vec2 = vec2(0.0, 0.0);
+    private radius: number;
+
+    constructor(center: { x: number, y: number }, radius: number) {
+        this.set(center, radius)
+    }
+
+    set(center: { x: number, y: number }, radius: number) {
+        this.radius = radius
+        this.center.set(center.x, center.y)
+        return this
+    }
+}
+
+type Part = PartPoint | PartSegment
+
+class Node {
+    pos: Vec2 = vec2(0.0, 0.0)
+    angle: number = 0.0
+    vel: Vec2
+    angleVel: number = 0.0
+
+    mass_center: Vec2 = vec2(0.0, 0.0)
+    mass: number = null
+    inertia: number = null
+
+    children: Node[] = []
+}
+
+class Tree {
+    root: Node
+    parts: Part[] = []
+    ts: number
+}
+
+export class SolidBody {
+    template: Node
+    current: Tree
+    trace: Tree[] = []
+    setTime(t: Time): SolidBody {return this}
+    getState(): Node{return null}
+}

@@ -1,8 +1,8 @@
 import {Region, vec2, Vec2} from "./vec2.js";
-import {GameObject, GameObjectContainer, Time, World} from "./world.js";
+import {GameObject, GameObjectContainer, Time, TOnRedraw, World} from "./world.js";
 import {DEFAULT_GRAVITY, PhysicsEngine} from "./phx.js";
 import {Container} from "./utils.js";
-import {CircleDrawer, TextDrawer} from "./gfx_geom.js";
+import {DrawCircle, DrawPoly, DrawText} from "./gfx_geom.js";
 import {BasicTransform} from "./shapes.js";
 import {Tree} from "./g_ui.js";
 
@@ -14,17 +14,18 @@ export class Level extends GameObjectContainer {
     public paddleArea: Region;
     public bounds: Region;
     public localTransform: BasicTransform = new BasicTransform()
+    name = "Level #?"
+    typename = "Level"
 
     constructor(bounds: Region, gravity: number = DEFAULT_GRAVITY) {
         super();
-        let p = new PhysicsEngine();
-        this.physics = p;
+        this.physics = new PhysicsEngine();
         this.add(
             new GameObject().onUpdate(
                 (world, t) => {
-                    //p.step(t)
+                    // p.step(t)
                 }
-            ),
+            ).named("Physics updater"),
         )
         this.bounds = bounds;
         // this.paddle = new PlayerPaddle(vec2(playerSpawn.x, playerSpawn.y));
@@ -32,19 +33,21 @@ export class Level extends GameObjectContainer {
     }
 };
 
+
 function SampleObj() {
-    let obj = new GameObject();
-    let con = new GameObjectContainer();
-    let tf = con.localTransform = new BasicTransform();
-    obj.onRedraw(
-        CircleDrawer(() => {
-            return {radius: 0.1, x: 0.3, y: 0.3}
-        })
-    ).onUpdate((world, t) => {
+    let obj = new GameObject().named("Sample obj");
+    let tf = new BasicTransform();
+    obj.onRedraw((world, drawing, time) => {
+        DrawPoly([vec2(-0.2, -0.2), vec2(0.2, -0.2), vec2(0.2, 0.2), vec2(-0.2, 0.2)],
+            null, {strokeColor: "red", lineWidth: 1})(world, drawing, time);
+        DrawCircle({x: 0.3, y: 0.3},
+            0.1,
+            null,
+            null, {strokeColor: "black", lineWidth: 1})(world, drawing, time);
+    }).onUpdate((world, t) => {
         tf.setAngle(t.ts).setPos(0.1, 0.1)
     })
-    con.add(obj)
-    return con;
+    return obj;
 }
 
 export class Level1 extends Level {
@@ -52,6 +55,7 @@ export class Level1 extends Level {
         super(
             new Region(0.0, 0.0, 2.0, 2.0),
         );
+        console.log("!!!!")
         this.add(SampleObj())
         // this.add(
         //     new Wall(vec2(0.0, 1.0), 0.1, 2.0, 0, "red"),

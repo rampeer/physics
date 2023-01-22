@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "@codemirror/lang-javascript": "^6.1.2",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "codemirror": "^6.0.1",
+    "rollup": "^3.10.1"
+  },
+  "name": "codemirror",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

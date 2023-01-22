@@ -219,14 +219,13 @@ export let controlDirection: Vec2 = vec2(0, -1.0);
 export function initControls(canvas: Element) {
     if (mobileAndTabletCheck()) {
         touchPointer = new TouchScreenHandler(canvas);
+        canvas.addEventListener("touchstart", handleStart, false);
+        canvas.addEventListener("touchend", handleEnd, false);
+        canvas.addEventListener("touchmove", handleMove, false);
     } else {
         mousePointer = new MousePointerHandler(canvas);
+        canvas.addEventListener("mousedown", mouseDown);
+        canvas.addEventListener("mousemove", mouseMove);
+        canvas.addEventListener("mouseup", mouseUp);
     }
-    canvas.addEventListener("touchstart", handleStart, false);
-    canvas.addEventListener("touchend", handleEnd, false);
-    canvas.addEventListener("touchmove", handleMove, false);
-
-    canvas.addEventListener("mousedown", mouseDown);
-    canvas.addEventListener("mousemove", mouseMove);
-    canvas.addEventListener("mouseup", mouseUp);
 }

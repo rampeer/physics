@@ -15,18 +15,79 @@ System.register(["./vec2.js"], function (exports_1, context_1) {
             d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
         };
     })();
-    var vec2_js_1, TransformMatrix, BasicTransform, newCircle, newPoly, newRect, Segment, CircleShape, ConvexPolyShape;
-    var __moduleName = context_1 && context_1.id;
-    function isReverseOriented(pts) {
-        var posW = 0, negW = 0, len = pts.length;
-        for (var i = 0; i < len; i += 1) {
-            var crossProd = (pts[(i + 1) % len].minus(pts[i]))
-                .cross(pts[(i + 2) % len].minus(pts[(i + 1) % len]));
-            crossProd > 0 ? posW += 1 : negW += 1;
-            if (posW && negW)
-                throw Error("Point(0, 0) is not inside the polygon or polygon is not convex");
+    var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+                ar[i] = from[i];
+            }
         }
-        return negW > 0;
+        return to.concat(ar || Array.prototype.slice.call(from));
+    };
+    var vec2_js_1, TransformMatrix, BasicTransform, newCircle, newPoly, newRect, CircleShape, ConvexShape, PolyShape;
+    var __moduleName = context_1 && context_1.id;
+    function countWinding(pts) {
+        var len = pts.length, area = 0.0, angleSign = new Array(len);
+        for (var prev = 0; prev < len; prev += 1) {
+            var cur = (prev + 1) % len, next = (prev + 2) % len, crossProd = pts[cur].minus(pts[prev]).cross(pts[next].minus(pts[cur])) / 2.0;
+            area += crossProd;
+            angleSign[cur] = crossProd > 0;
+        }
+        return {
+            area: area,
+            isRightAngle: angleSign,
+            convex: angleSign.every(function (x) { return x; }) || angleSign.every(function (x) { return !x; })
+        };
+    }
+    function roll(arr, shift) {
+        return __spreadArray(__spreadArray([], arr.slice(shift, arr.length), true), arr.slice(0, shift), true);
+    }
+    function first(arr, pred) {
+        if (pred === void 0) { pred = (function (x) { return !!x; }); }
+        for (var i = 0; i < arr.length; i += 1) {
+            if (pred(arr[i], i)) {
+                return i;
+            }
+        }
+        return null;
+    }
+    function last(arr, pred) {
+        if (pred === void 0) { pred = (function (x) { return !!x; }); }
+        var idx = null;
+        for (var i = 0; i < arr.length; i += 1) {
+            if (pred(arr[i], i)) {
+                idx = i;
+            }
+        }
+        return idx;
+    }
+    function seqAlong(arr, fn) {
+        var a = new Array(arr.length);
+        for (var i = 0; i < arr.length; i += 1) {
+            a[i] = fn(i);
+        }
+        return a;
+    }
+    function triangleArea(a, b, c) {
+        var area = b.minus(a).cross(c.minus(b)) / 2.0;
+        console.log(area);
+        return area;
+    }
+    exports_1("triangleArea", triangleArea);
+    function toConvex(points) {
+        var a = countWinding(points);
+        if (a.convex)
+            return [points];
+        var firstPos = first(a.isRightAngle, function (x) { return x; });
+        console.log(a, firstPos);
+        if (firstPos === 0) {
+            var lastNeg = last(a.isRightAngle, function (x) { return !x; });
+            return toConvex(roll(points, lastNeg));
+        }
+        else {
+            throw Error();
+            return __spreadArray(__spreadArray([], toConvex(points.splice(firstPos + 1)), true), toConvex(points.splice(firstPos - 1, points.length)), true);
+        }
     }
     return {
         setters: [
@@ -110,28 +171,12 @@ System.register(["./vec2.js"], function (exports_1, context_1) {
                 return new CircleShape(radius, radius2 || radius);
             });
             exports_1("newPoly", newPoly = function (localPoints) {
-                return new ConvexPolyShape(localPoints);
+                return new ConvexShape(localPoints);
             });
             exports_1("newRect", newRect = function (width, height) {
                 var w2 = width / 2, h2 = height / 2;
                 return newPoly([vec2_js_1.vec2(+w2, +h2), vec2_js_1.vec2(+w2, -h2), vec2_js_1.vec2(-w2, -h2), vec2_js_1.vec2(-w2, h2)]);
             });
-            Segment = (function () {
-                function Segment(from, to) {
-                    this.set(from, to);
-                }
-                Segment.prototype.set = function (from, to) {
-                    var arrow = vec2_js_1.vecFromTo(from, to);
-                    this.from = from;
-                    this.to = to;
-                    this.dir = arrow.norm();
-                    this.norm = this.dir.rot270();
-                    this.len = arrow.length();
-                    return this;
-                };
-                return Segment;
-            }());
-            exports_1("Segment", Segment);
             CircleShape = (function () {
                 function CircleShape(radius, radius2) {
                     this.center = vec2_js_1.vec2(0.0, 0.0);
@@ -145,19 +190,25 @@ System.register(["./vec2.js"], function (exports_1, context_1) {
                 return CircleShape;
             }());
             exports_1("CircleShape", CircleShape);
-            ConvexPolyShape = (function () {
-                function ConvexPolyShape(pts, margin) {
-                    this.edges = [];
-                    this.margin = 0.0;
-                    this.margin = margin || 0.0;
-                    var ptsClockwise = isReverseOriented(pts) ? pts : pts.reverse(), len = pts.length;
-                    for (var i = 0; i < len; i += 1) {
-                        this.edges.push(new Segment(ptsClockwise[i], ptsClockwise[(i + 1) % len]));
-                    }
+            ConvexShape = (function () {
+                function ConvexShape(pts) {
+                    this.points = [];
+                    var winding = countWinding(pts), reverse = winding.area < 0;
+                    this.points = reverse ? pts : pts.reverse();
+                    if (!winding.isRightAngle.every(function (x) { return x === !reverse; }))
+                        throw Error("Poly is not convex!");
                 }
-                return ConvexPolyShape;
+                return ConvexShape;
             }());
-            exports_1("ConvexPolyShape", ConvexPolyShape);
+            exports_1("ConvexShape", ConvexShape);
+            PolyShape = (function () {
+                function PolyShape(pts) {
+                    this.polys = [];
+                    this.polys = toConvex(pts).map(function (x) { return new ConvexShape(x); });
+                }
+                return PolyShape;
+            }());
+            exports_1("PolyShape", PolyShape);
         }
     };
 });

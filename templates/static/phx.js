@@ -33,29 +33,19 @@ System.register(["./utils.js"], function (exports_1, context_1) {
                 PhysicsEngine.prototype.step = function (timer) {
                     if (this.lastTs === null || !this.active) {
                         this.lastTs = timer.ts;
+                        this.nextFrameTime = 0.0;
                         this.time = 0.0;
                     }
-                    this.time += timer.ts - this.lastTs;
+                    var dt = timer.ts - this.lastTs;
+                    this.time += dt;
                     this.lastTs = timer.ts;
-                    while (this.nextFrameTime === null || this.nextFrameTime > this.time) {
-                        this.nextFrameTime += PhysicsSettings.maxStepTime;
-                        this._step(this.time, this.nextFrameTime);
+                    var maxStep = null;
+                    while (this.nextFrameTime < this.time) {
+                        this.nextFrameTime = this._step(this.time, this.nextFrameTime);
                     }
                 };
-                PhysicsEngine.prototype.detectContacts = function () {
-                    return null;
-                };
-                PhysicsEngine.prototype._step = function (ts, dt) {
-                    console.log(ts, dt);
-                    var toUpdate = [];
-                    for (var _i = 0, _a = this.objects; _i < _a.length; _i++) {
-                        var b = _a[_i];
-                        if (b.state.ts < ts) {
-                            toUpdate.push(b);
-                        }
-                    }
-                    if (!toUpdate)
-                        return;
+                PhysicsEngine.prototype._step = function (ts, maxTs) {
+                    return maxTs;
                 };
                 return PhysicsEngine;
             }());

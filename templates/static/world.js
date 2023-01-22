@@ -38,23 +38,23 @@ System.register(["./vec2.js", "./gfx.js", "./utils.js", "./shapes.js"], function
         ],
         execute: function () {
             World = (function () {
-                function World(ctx) {
+                function World(container, ctx) {
                     this.scene = null;
+                    this.container = null;
+                    this.container = container;
                     this.drawUtils = new gfx_js_1.DrawUtils(ctx);
                 }
-                World.prototype.update = function (time) {
-                    this.scene.update(this, time);
-                };
-                World.prototype.render = function (time) {
-                    this.scene.redraw(this, this.drawUtils, time);
+                World.prototype.getSize = function () {
+                    var r = this.container.getBoundingClientRect();
+                    return vec2_js_1.vec2(r.width, r.height);
                 };
                 World.prototype.setScene = function (scene) {
                     this.scene = scene;
                     return this;
                 };
                 World.prototype.frame = function (time) {
-                    this.update(time);
-                    this.render(time);
+                    this.scene.update(this, time);
+                    this.scene.redraw(this, this.drawUtils, time);
                 };
                 return World;
             }());
@@ -62,11 +62,19 @@ System.register(["./vec2.js", "./gfx.js", "./utils.js", "./shapes.js"], function
             GameObject = (function () {
                 function GameObject() {
                     this.localTransform = null;
+                    this.screenTransform = null;
                     this.update = null;
+                    this.name = "Unknown";
+                    this.typename = "Game object";
                     this.redraw = null;
                     this.hitTest = null;
                     this.clicked = null;
                 }
+                GameObject.prototype.named = function (typename, name) {
+                    this.name = name || typename;
+                    this.typename = typename;
+                    return this;
+                };
                 GameObject.prototype.onUpdate = function (fn) {
                     this.update = fn;
                     return this;
@@ -93,6 +101,7 @@ System.register(["./vec2.js", "./gfx.js", "./utils.js", "./shapes.js"], function
                     _this.children = new utils_js_1.Container();
                     _this.add = _this.children.add;
                     _this.remove = _this.children.remove;
+                    _this.typename = "Container";
                     _this.update = function (world, t) {
                         _this.children
                             .filter(function (x) { return x.update !== null; })
@@ -117,6 +126,7 @@ System.register(["./vec2.js", "./gfx.js", "./utils.js", "./shapes.js"], function
                 function Scene() {
                     var _this = _super.call(this) || this;
                     _this.screenSize = null;
+                    _this.typename = "Scene";
                     _this.localTransform = new shapes_js_1.BasicTransform();
                     return _this;
                 }

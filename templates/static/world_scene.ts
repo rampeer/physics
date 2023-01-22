@@ -1,20 +1,18 @@
 import {Scene, Time, World, TOnUpdate, GameObject} from "./world.js";
 import {Level} from "./level1.js";
 import {Background, DrawUtils} from "./gfx.js";
-import {PolyDrawer} from "./gfx_geom.js";
-import {ConvexPolyShape, TransformMatrix} from "./shapes.js";
+import {ConvexShape, TransformMatrix} from "./shapes.js";
 import {vec2} from "./vec2.js";
 import {FPSCounter, Tree} from "./g_ui.js";
 
 export class MainScene extends Scene {
-    rescaleLevelTransform = () => {
-        let scale = Math.min(
-            this.screenSize.x / this.level.bounds.width(),
-            this.screenSize.y / this.level.bounds.height()
-        );
+    name = "Gameplay Scene"
+    rescaleLevelTransform: TOnUpdate = (world) => {
+        let r = world.getSize(), b = this.level.bounds
+        let scale = Math.min(r.x / b.width(), r.y / b.height());
         this.level.localTransform.setPos({
-            x: (this.screenSize.x - scale * this.level.bounds.width()) / 2,
-            y: (this.screenSize.y - scale * this.level.bounds.height()) / 2
+            x: (r.x - scale * b.width()) / 2,
+            y: (r.y - scale * b.height()) / 2
         }).setScale(scale)
     }
 
@@ -33,8 +31,7 @@ export class MainScene extends Scene {
         //         PolyDrawer(r, "black", "red", 1)
         //     )
         this.add(
-            Background(),
-            new GameObject().onUpdate(this.rescaleLevelTransform),
+            new GameObject().onUpdate(this.rescaleLevelTransform).named("Update level transform"),
             level,
             Tree(),
             FPSCounter()

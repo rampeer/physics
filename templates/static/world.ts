@@ -1,5 +1,5 @@
 import {vec2, Vec2} from "./vec2.js";
-import {DrawUtils} from "./gfx.js";
+import {Background, DrawUtils} from "./gfx.js";
 import {Container} from "./utils.js";
 import {BasicTransform, TransformMatrix} from "./shapes.js";
 
@@ -7,10 +7,17 @@ import {BasicTransform, TransformMatrix} from "./shapes.js";
 
 export class World {
     public scene: Scene = null;
+    public container: HTMLElement = null;
     private drawUtils: DrawUtils;
 
-    constructor(ctx: CanvasRenderingContext2D) {
+    constructor(container: HTMLElement, ctx: CanvasRenderingContext2D) {
+        this.container = container;
         this.drawUtils = new DrawUtils(ctx);
+    }
+
+    getSize() {
+        let r = this.container.getBoundingClientRect();
+        return vec2(r.width, r.height)
     }
 
     setScene(scene: Scene) {
@@ -36,12 +43,20 @@ export type THitTest = (x: number, y: number) => boolean;
 export type TOnClick = () => void;
 
 export class GameObject {
-    protected localTransform: TransformMatrix = null;
+    localTransform: TransformMatrix = null;
     protected screenTransform: TransformMatrix = null;
     public update: TOnUpdate = null;
+    public name: string = "Unknown";
+    public typename: string = "Game object";
     public redraw: TOnRedraw = null;
     public hitTest: THitTest = null;
     public clicked: TOnClick = null;
+
+    named(typename: string, name?: string) {
+        this.name = name || typename
+        this.typename = typename
+        return this
+    }
 
     onUpdate(fn: TOnUpdate) {
         this.update = fn;
@@ -68,6 +83,7 @@ export class GameObjectContainer extends GameObject {
     protected children: Container<GameObject> = new Container()
     public add = this.children.add;
     public remove = this.children.remove;
+    typename = "Container"
 
     update = (world: World, t: Time): void => {
         this.children
@@ -87,14 +103,11 @@ export class GameObjectContainer extends GameObject {
 }
 
 export class Scene extends GameObjectContainer {
-    public screenSize: Vec2 = null;
+    typename = "Scene"
 
     constructor() {
         super();
+        this.add(Background())
         this.localTransform = new BasicTransform()
-    }
-
-    screenResize(width: number, height: number) {
-        this.screenSize = vec2(width, height)
     }
 }

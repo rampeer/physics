@@ -1,4 +1,4 @@
-import {vec2, Vec2, vecFromTo} from "./vec2.js";
+import {vec2, Vec2} from "./vec2.js";
 
 export class TransformMatrix {
     matrix: number[] = [1.0, 0.0, 0.0, 1.0]
@@ -82,37 +82,15 @@ export let newCircle = (radius: number, radius2?: number): CircleShape => {
     return new CircleShape(radius, radius2 || radius)
 }
 
-export let newPoly = (localPoints: Vec2[]): ConvexPolyShape => {
-    return new ConvexPolyShape(localPoints)
+export let newPoly = (localPoints: Vec2[]): ConvexShape => {
+    return new ConvexShape(localPoints)
 }
 
-export let newRect = (width: number, height: number): ConvexPolyShape => {
+export let newRect = (width: number, height: number): ConvexShape => {
     let w2 = width / 2, h2 = height / 2;
     return newPoly(
         [vec2(+w2, +h2), vec2(+w2, -h2), vec2(-w2, -h2), vec2(-w2, h2)],
     )
-}
-
-export class Segment {
-    public from: Vec2;
-    public to: Vec2;
-    public norm: Vec2;
-    public dir: Vec2;
-    public len: number;
-
-    constructor(from: Vec2, to: Vec2) {
-        this.set(from, to)
-    }
-
-    set(from: Vec2, to: Vec2) {
-        let arrow = vecFromTo(from, to)
-        this.from = from;
-        this.to = to;
-        this.dir = arrow.norm()
-        this.norm = this.dir.rot270();
-        this.len = arrow.length()
-        return this
-    }
 }
 
 export class CircleShape {
@@ -131,31 +109,122 @@ export class CircleShape {
     }
 }
 
-function isReverseOriented(pts: Vec2[]): boolean {
-    let posW = 0, negW = 0, len = pts.length
+function countWinding(pts: Vec2[]) {
+    let len = pts.length,
+        area = 0.0,
+        angleSign: boolean[] = new Array(len)
 
-    for (let i = 0; i < len; i += 1) {
-        let crossProd = (pts[(i + 1) % len].minus(pts[i]))
-            .cross(pts[(i + 2) % len].minus(pts[(i + 1) % len]))
+    for (let prev = 0; prev < len; prev += 1) {
+        let cur = (prev + 1) % len,
+            next = (prev + 2) % len,
+            crossProd =
+                pts[cur].minus(pts[prev]).cross
+                (pts[next].minus(pts[cur])) / 2.0
 
-        crossProd > 0 ? posW += 1 : negW += 1
-        if (posW && negW) throw Error("Point(0, 0) is not inside the polygon or polygon is not convex")
+        area += crossProd
+        angleSign[cur] = crossProd > 0
     }
-    return negW > 0
+    return {
+        area: area,
+        isRightAngle: angleSign,
+        convex: angleSign.every(x => x) || angleSign.every(x => !x)
+    }
 }
 
-export class ConvexPolyShape {
-    public edges: Segment[] = [];
-    public margin: number = 0.0;
+export class ConvexShape {
+    public points: Vec2[] = [];
 
-    constructor(pts: Vec2[], margin?: number) {
-        this.margin = margin || 0.0
-        let ptsClockwise = isReverseOriented(pts) ? pts : pts.reverse(), len = pts.length
-        for (let i = 0; i < len; i += 1) {
-            this.edges.push(new Segment(
-                ptsClockwise[i], ptsClockwise[(i + 1) % len],
-            ))
+    constructor(pts: Vec2[]) {
+        let winding = countWinding(pts),
+            reverse = winding.area < 0
+        this.points = reverse ? pts : pts.reverse()
+        if (!winding.isRightAngle.every(x => x === !reverse))
+            throw Error("Poly is not convex!")
+    }
+}
+
+function roll<T>(arr: Array<T>, shift: number) {
+    return [...arr.slice(shift, arr.length), ...arr.slice(0, shift)]
+}
+
+function first<T>(arr: Array<T>,
+                  pred: (item: T, index: number) => boolean = (x => !!x)) {
+    for (let i = 0; i < arr.length; i += 1) {
+        if (pred(arr[i], i)) {
+            return i
         }
     }
+    return null
 }
 
+function last<T>(arr: Array<T>,
+                  pred: (item: T, index: number) => boolean = (x => !!x)) {
+    let idx = null;
+    for (let i = 0; i < arr.length; i += 1) {
+        if (pred(arr[i], i)) {
+            idx = i
+        }
+    }
+    return idx
+}
+
+function seqAlong<T, V>(
+    arr: Array<T>,
+    fn: (index: number) => V
+): Array<V> {
+    let a = new Array<V>(arr.length)
+    for (let i = 0; i < arr.length; i += 1) {
+        a[i] = fn(i)
+    }
+    return a
+}
+
+export function triangleArea(a: Vec2, b: Vec2, c: Vec2) {
+    let area = b.minus(a).cross(c.minus(b)) / 2.0
+    console.log(area)
+    return area
+}
+
+function toConvex(points: Vec2[]): Vec2[][] {
+    let a = countWinding(points)
+    if (a.convex)
+        return [points]
+    let firstPos = first(a.isRightAngle, x => x)
+    console.log(a, firstPos)
+    if (firstPos === 0) {
+        let lastNeg = last(a.isRightAngle, x => !x)
+        return toConvex(roll(points, lastNeg))
+    } else {
+        throw Error()
+        return [
+            ...toConvex(points.splice(firstPos + 1)),
+            ...toConvex(points.splice(firstPos - 1, points.length))
+        ]
+    }
+}
+
+export class PolyShape {
+    public polys: ConvexShape[] = [];
+
+    constructor(pts: Vec2[]) {
+        this.polys = toConvex(pts).map(x => new ConvexShape(x))
+    }
+}
+//
+// window["PolyShape"] = PolyShape
+// window["vec2"] = vec2
+//
+// window["shape"] = [
+//     vec2(0.5, 0.0), vec2(1.0, 1.0),
+//     vec2(0.0, 0.5), vec2(-1.0, 1.0),
+//     vec2(-0.5, 0.0), vec2(-1.0, -1.0),
+//     vec2(0.0, -0.5), vec2(1.0, -1.0),
+// ]
+// // window["shape"] = [
+// //     vec2(1.0, 0.0), vec2(1.0, 1.0),
+// //     vec2(0.0, 1.0), vec2(-1.0, 1.0),
+// //     vec2(-0.5, 0.0), vec2(-1.0, -1.0),
+// //     vec2(0.0, -1.0), vec2(1.0, -1.0),
+// // ]
+//
+// console.log(new PolyShape(window["shape"]))
